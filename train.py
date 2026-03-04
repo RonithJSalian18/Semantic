@@ -201,3 +201,11 @@ for epoch in range(EPOCHS):
 # ==============================
 torch.save(model.state_dict(), "drone_segmentation.pth")
 print("Model saved!")
+model.load_state_dict(torch.load("drone_segmentation.pth"))
+model.eval()
+img, mask = val_dataset[0]
+with torch.no_grad():
+    pred = model(img.unsqueeze(0).to(DEVICE))
+    pred = torch.argmax(pred, dim=1).squeeze(0).cpu()
+visualize(img, mask, pred)
+print("Completed inference on one sample")
