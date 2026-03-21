@@ -1,28 +1,30 @@
-# Use official TensorFlow image
-FROM tensorflow/tensorflow:2.13.0
+# Use lightweight Python image
+FROM python:3.10-slim
 
 # Set working directory
 WORKDIR /app
 
-# Prevent Python from writing pyc files
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Install system dependencies required by OpenCV
+# Install system dependencies (important for OpenCV)
 RUN apt-get update && apt-get install -y \
-    python3-pip \
     libgl1 \
     libglib2.0-0 \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements file
-COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy project files
 COPY . .
 
-# Default command to run training script
-CMD ["python", "main.py"]
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    numpy \
+    opencv-python-headless \
+    tensorflow \
+    scikit-learn \
+    tqdm \
+    albumentations
+
+# Create output directory
+RUN mkdir -p segmentation_results
+
+# Run script
+CMD ["python", "server_notebook.py"]
