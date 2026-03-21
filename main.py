@@ -132,12 +132,20 @@ class DataLoader:
         files = sorted((self.dataset_dir/split/'images').glob("*.npy"))
 
         def load(x):
-            img = np.load(x)
-            mask = np.load(str(x).replace("images","masks"))
-            return img,mask
+          x = x.numpy().decode("utf-8")   # 🔥 convert tensor → string
+
+          img = np.load(x)
+          mask = np.load(x.replace("images", "masks"))
+
+          return img.astype(np.float32), mask.astype(np.float32)
 
         ds = tf.data.Dataset.from_tensor_slices([str(f) for f in files])
         ds = ds.map(lambda x: tf.py_function(load,[x],[tf.float32,tf.float32]))
+        def _fix_shape(img, mask):
+          img.set_shape((512, 512, 3))
+          mask.set_shape((512, 512))
+          return img, mask
+        ds = ds.map(_fix_shape)
         ds = ds.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
         return ds
 
